@@ -17,19 +17,18 @@
 
 package im.turms.server.common.infra.logging.core.logger;
 
-import java.util.List;
-import jakarta.annotation.Nullable;
-
-import io.netty.buffer.ByteBuf;
-import lombok.Data;
-import org.jctools.queues.MpscUnboundedArrayQueue;
-
 import im.turms.server.common.infra.logging.core.appender.Appender;
 import im.turms.server.common.infra.logging.core.layout.TurmsTemplateLayout;
 import im.turms.server.common.infra.logging.core.model.LogLevel;
 import im.turms.server.common.infra.logging.core.model.LogRecord;
 import im.turms.server.common.infra.netty.ByteBufUtil;
 import im.turms.server.common.infra.netty.ReferenceCountUtil;
+import io.netty.buffer.ByteBuf;
+import jakarta.annotation.Nullable;
+import lombok.Data;
+import org.jctools.queues.MpscUnboundedArrayQueue;
+
+import java.util.List;
 
 /**
  * @author James Chen
@@ -94,6 +93,7 @@ public final class AsyncLogger extends BaseLogger {
     protected void doLog(LogLevel level, ByteBuf message) {
         ByteBuf buffer = null;
         try {
+            // 格式化并扔进 queue
             buffer = layout.format(nameForLog, level, message);
             boolean offer =
                     queue.offer(new LogRecord(this, level, System.currentTimeMillis(), buffer));

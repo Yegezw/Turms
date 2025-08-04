@@ -17,17 +17,6 @@
 
 package im.turms.server.common.infra.logging.core.logger;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import lombok.Getter;
-import org.jctools.queues.MpscUnboundedArrayQueue;
-import reactor.core.publisher.Mono;
-
 import im.turms.server.common.infra.application.JobShutdownOrder;
 import im.turms.server.common.infra.application.TurmsApplicationContext;
 import im.turms.server.common.infra.cluster.node.NodeType;
@@ -45,11 +34,18 @@ import im.turms.server.common.infra.property.env.common.logging.ConsoleLoggingPr
 import im.turms.server.common.infra.property.env.common.logging.FileLoggingProperties;
 import im.turms.server.common.infra.property.env.common.logging.LoggingProperties;
 import im.turms.server.common.infra.system.SystemUtil;
+import lombok.Getter;
+import org.jctools.queues.MpscUnboundedArrayQueue;
+import reactor.core.publisher.Mono;
 
-import static im.turms.server.common.infra.application.ApplicationConst.PROPERTY_NAME_TURMS_AI_SERVING_HOME;
-import static im.turms.server.common.infra.application.ApplicationConst.PROPERTY_NAME_TURMS_GATEWAY_HOME;
-import static im.turms.server.common.infra.application.ApplicationConst.PROPERTY_NAME_TURMS_MOCK_NODE_HOME;
-import static im.turms.server.common.infra.application.ApplicationConst.PROPERTY_NAME_TURMS_SERVICE_HOME;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import static im.turms.server.common.infra.application.ApplicationConst.*;
 
 /**
  * @author James Chen
@@ -73,6 +69,9 @@ public class LoggerFactory {
     private static FileLoggingProperties fileLoggingProperties;
     private static Appender defaultConsoleAppender;
 
+    /**
+     * 日志处理器
+     */
     private static LogProcessor processor;
 
     private LoggerFactory() {

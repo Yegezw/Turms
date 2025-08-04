@@ -17,6 +17,10 @@
 
 package im.turms.server.common.infra.logging.core.compression;
 
+import im.turms.server.common.infra.io.InputOutputException;
+import im.turms.server.common.infra.memory.ByteBufferUtil;
+import im.turms.server.common.infra.thread.NotThreadSafe;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -24,10 +28,6 @@ import java.nio.channels.FileChannel;
 import java.util.zip.CRC32;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
-
-import im.turms.server.common.infra.io.InputOutputException;
-import im.turms.server.common.infra.memory.ByteBufferUtil;
-import im.turms.server.common.infra.thread.NotThreadSafe;
 
 /**
  * This class has a better performance than {@link GZIPOutputStream} because the class: 1. uses
@@ -58,6 +58,11 @@ public class FastGzipOutputStream implements AutoCloseable {
             });
     private static final int TRAILER_SIZE = 8;
 
+    /**
+     * GZIP 文件格式规范要求在文件的末尾包含一个 trailer (尾部)<br>
+     * 其中含有原始未压缩数据的 CRC-32 校验和 + 数据的原始长度<br>
+     * 这个校验和用于在解压时验证数据的完整性, 确保数据在传输或存储过程中没有被损坏
+     */
     private final CRC32 crc = new CRC32();
     private final Deflater deflater;
 
@@ -123,18 +128,18 @@ public class FastGzipOutputStream implements AutoCloseable {
 
     public void write(ByteBuffer input) throws IOException {
         Deflater localDeflater = deflater;
-        localDeflater.setInput(input);
-        ByteBuffer localTempOut = tempOut;
-        while (input.hasRemaining()) {
+        localDeflater.setInput(input);     // 1. 设置压缩器的输入
+        ByteBuffer localTempOut = tempOut; // 2. 缓冲区用于存储压缩后的数据
+        while (input.hasRemaining()) {     // 3. 循环压缩和写入
             int written = localDeflater.deflate(localTempOut, Deflater.NO_FLUSH);
             if (written > 0) {
-                localTempOut.flip();
-                channel.write(localTempOut);
-                localTempOut.clear();
+                localTempOut.flip();         // 1. 切换到读模式
+                channel.write(localTempOut); // 2. 写入到通道
+                localTempOut.clear();        // 3. 清空缓冲区，准备下一次写入
             }
         }
         input.clear();
-        crc.update(input);
+        crc.update(input); // 4. 更新 CRC32 校验和
     }
 
     private void writeHeader() {
@@ -149,10 +154,10 @@ public class FastGzipOutputStream implements AutoCloseable {
 
     private void writeTrailer() throws IOException {
         try {
-            trailer.order(ByteOrder.LITTLE_ENDIAN)
-                    .putInt((int) crc.getValue())
-                    .putInt(deflater.getTotalIn())
-                    .flip();
+            trailer.order(ByteOrder.LITTLE_ENDIAN) // GZIP 文件格式要求使用小端字节序
+                    .putInt((int) crc.getValue())  // CRC-32 校验和
+                    .putInt(deflater.getTotalIn()) // 原始数据的长度
+                    .flip();                       // 切换到读模式
             channel.write(trailer);
         } finally {
             trailer.clear();

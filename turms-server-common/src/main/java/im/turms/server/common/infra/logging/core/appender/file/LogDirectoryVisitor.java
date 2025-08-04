@@ -17,6 +17,10 @@
 
 package im.turms.server.common.infra.logging.core.appender.file;
 
+import im.turms.server.common.infra.io.InputOutputException;
+import im.turms.server.common.infra.logging.core.logger.InternalLogger;
+import im.turms.server.common.infra.time.TimeZoneConst;
+
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -27,30 +31,40 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.TreeSet;
-
-import im.turms.server.common.infra.io.InputOutputException;
-import im.turms.server.common.infra.logging.core.logger.InternalLogger;
-import im.turms.server.common.infra.time.TimeZoneConst;
+import java.util.*;
 
 /**
  * @author James Chen
  */
 public class LogDirectoryVisitor extends SimpleFileVisitor<Path> {
 
+    /**
+     * 所有扫描到的日志文件信息
+     */
     private final TreeSet<LogFile> files = new TreeSet<>(Comparator.comparingLong(LogFile::index));
 
+    /**
+     * 前缀
+     */
     private final String filePrefix;
+    /**
+     * 后缀
+     */
     private final String fileSuffix;
+    /**
+     * 中间 (日期格式 yyyyMMdd)
+     */
     private final String fileMiddle;
 
     private final DateTimeFormatter fileDateTimeFormatter;
 
+    /**
+     * 保留的最大文件数
+     */
     private final int maxFilesToKeep;
+    /**
+     * 是否删除超过最大文件数的文件
+     */
     private final boolean deleteExceedFiles;
 
     public LogDirectoryVisitor(
@@ -75,6 +89,7 @@ public class LogDirectoryVisitor extends SimpleFileVisitor<Path> {
             if (!isLogFile(name)) {
                 return FileVisitResult.CONTINUE;
             }
+            // turms_20231027_0.log
             int indexEnd = name.length() - fileSuffix.length();
             int indexStart = name.lastIndexOf(RollingFileAppender.FIELD_DELIMITER, indexEnd - 1);
             if (indexStart == filePrefix.length() + fileMiddle.length() + 1) {
@@ -101,7 +116,7 @@ public class LogDirectoryVisitor extends SimpleFileVisitor<Path> {
     private void handleNewLogFile(Path path, ZonedDateTime timestamp, long index) {
         String fileName = path.getFileName()
                 .toString();
-        boolean isArchive = fileName.endsWith(RollingFileAppender.ARCHIVE_FILE_SUFFIX);
+        boolean isArchive = fileName.endsWith(RollingFileAppender.ARCHIVE_FILE_SUFFIX); // 已归档
         Path filePath;
         Path archivePath;
         if (isArchive) {

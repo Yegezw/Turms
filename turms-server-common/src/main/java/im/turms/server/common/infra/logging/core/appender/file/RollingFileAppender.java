@@ -17,24 +17,6 @@
 
 package im.turms.server.common.infra.logging.core.appender.file;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Deque;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import lombok.Getter;
-
 import im.turms.server.common.infra.io.InputOutputException;
 import im.turms.server.common.infra.lang.StringUtil;
 import im.turms.server.common.infra.logging.core.appender.ChannelAppender;
@@ -44,6 +26,19 @@ import im.turms.server.common.infra.logging.core.model.LogLevel;
 import im.turms.server.common.infra.logging.core.model.LogRecord;
 import im.turms.server.common.infra.memory.ByteBufferUtil;
 import im.turms.server.common.infra.time.TimeZoneConst;
+import lombok.Getter;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.*;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Deque;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static im.turms.server.common.infra.unit.ByteSizeUnit.GB;
 import static im.turms.server.common.infra.unit.ByteSizeUnit.MB;
@@ -58,7 +53,7 @@ public class RollingFileAppender extends ChannelAppender {
 
     public static final String ARCHIVE_FILE_SUFFIX = ".gz";
     // 3 is a good trade-off between speed and compression ratio
-    private static final int COMPRESSION_LEVEL = 3;
+    private static final int COMPRESSION_LEVEL = 3; // 压缩级别
 
     private static final Set<StandardOpenOption> READ_OPTIONS = Set.of(StandardOpenOption.READ);
     private static final Set<StandardOpenOption> CREATE_NEW_OPTIONS =
@@ -69,27 +64,66 @@ public class RollingFileAppender extends ChannelAppender {
     private static final Set<StandardOpenOption> APPEND_OPTIONS =
             Set.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
 
+    /**
+     * 前缀
+     */
     private final String filePrefix;
+    /**
+     * 后缀
+     */
     private final String fileSuffix;
 
+    /**
+     * 日志文件所在目录的路径对象
+     */
     @Getter
     private final Path fileDirectory;
+    /**
+     * 日志文件所在目录的文件对象
+     */
     private final File fileDirectoryFile;
 
     private final DateTimeFormatter fileDateTimeFormatter = DateTimeFormatter.ofPattern(FILE_MIDDLE)
             .withZone(TimeZoneConst.ZONE_ID);
 
+    /**
+     * 保留的最大文件数
+     */
     private final int maxFiles;
+    /**
+     * 每个日志文件的最大字节数, 默认 1 GB
+     */
     private final long maxFileBytes;
+    /**
+     * 最小可用空间字节数, 默认 2.5 * maxFileBytes
+     */
     private final long minUsableSpaceBytes;
 
+    /**
+     * 日志文件列表
+     */
     private final Deque<LogFile> files;
+    /**
+     * 当前日志文件
+     */
     private LogFile currentFile;
 
+    /**
+     * 下一个文件的字节数
+     */
     private long nextFileBytes;
+    /**
+     * 下一个文件的索引
+     */
     private long nextIndex;
+    /**
+     * 下一个文件的时间戳, 以纳秒为单位
+     */
     private long nextDay = Long.MIN_VALUE;
 
+    /**
+     * 是否启用压缩
+     */
     private final boolean enableCompression;
     private final FastGzipOutputStream gzipOutputStream;
 

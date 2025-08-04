@@ -22,6 +22,12 @@ import lombok.Data;
 import im.turms.server.common.infra.logging.core.model.LogLevel;
 import im.turms.server.common.infra.logging.core.model.LogRecord;
 
+/*
+ * Appender
+ * ChannelAppender                                 SystemConsoleAppender
+ * ChannelConsoleAppender + RollingFileAppender
+ */
+
 /**
  * @author James Chen
  */

@@ -17,13 +17,21 @@
 
 package im.turms.server.common.infra.logging.core.logger;
 
-import java.util.List;
-import jakarta.annotation.Nullable;
-
-import io.netty.buffer.ByteBuf;
-
 import im.turms.server.common.infra.logging.core.appender.Appender;
 import im.turms.server.common.infra.logging.core.model.LogLevel;
+import io.netty.buffer.ByteBuf;
+import jakarta.annotation.Nullable;
+
+import java.util.List;
+
+/*
+ * Logger
+ * BaseLogger                      NoOpLogger + WrappedLogger
+ * InternalLogger + AsyncLogger
+ *
+ * LoggerOptions
+ * LoggerFactory
+ */
 
 /**
  * @author James Chen
